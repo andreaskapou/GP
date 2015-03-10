@@ -14,6 +14,7 @@ require(reshape2)
 require(ggplot2)
 require(mvtnorm)
 source("GP-fit.R")
+source("solve-cholesky.R")
 
 ##=======================
 # Initialize parameters #
@@ -22,13 +23,13 @@ set.seed(12345)   # Set a seed for repeatable plots
 N       <- 50     # Number of samples
 l       <- 1      # Length-scale parameter
 s.f     <- 1      # Singal variance
-s.n     <- .1     # Noise variance
+s.n     <- .05    # Noise variance
 # Define the points at which we want to define the functions
 X       <- seq(-5, 5, len=100)
 # Assume that we have some known data points
 f       <- data.frame(x=c(-4,-3,-1,0,2,4, 5),
                       y=c(-1,1,1,1,-1,-2, 0))
-method <- "normal" 
+method  <- "normal"
 
 ##=================================
 # Call the GP Regression function #

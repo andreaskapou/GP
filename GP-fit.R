@@ -28,7 +28,8 @@ GP.fit <- function(f, X, N=50, l=1, s.f=1, s.n=0.1, method="cholesky"){
                                                                 n * log(2*pi)/2
   }else if (identical(method,"cholesky")){ # Compute using Cholesky decomposition
     L       <- t(chol(K + s.n^2 * I))
-    a       <- solve(t(L), solve(L, f$y))
+    #a       <- solve(t(L), solve(L, f$y))
+    a       <- solve.cholesky(L, f$y)
     k.star  <- Cov(f$x, X)
     E.f     <- t(k.star) %*% a
     v       <- solve(L, k.star)
@@ -43,7 +44,6 @@ GP.fit <- function(f, X, N=50, l=1, s.f=1, s.n=0.1, method="cholesky"){
     
     # Sample from a multivariate normal distribution
     #values[,i] <- C.f %*% rnorm(length(E.f)) + E.f
-    C.f <- C.f
     values[,i] <- rmvnorm(1, mean=E.f, sigma=C.f, method="svd")
     #values[,i] <- t(rmvnorm(1, mean=rep(0, length(E.f)), sigma=C.f, method="svd")) + E.f
   }
