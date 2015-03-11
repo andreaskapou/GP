@@ -15,6 +15,8 @@ require(ggplot2)
 require(mvtnorm)
 source("GP-fit.R")
 source("solve-cholesky.R")
+source("covSE-iso.R")
+source("sq-dist.R")
 
 ##=======================
 # Initialize parameters #
@@ -22,27 +24,40 @@ source("solve-cholesky.R")
 set.seed(12345)   # Set a seed for repeatable plots
 N       <- 50     # Number of samples
 l       <- 1      # Length-scale parameter
-s.f     <- 1      # Singal variance
-s.n     <- .05    # Noise variance
+sf2     <- 1      # Singal variance
+sn2     <- .05    # Noise variance
 # Define the points at which we want to define the functions
-X       <- seq(-5, 5, len=100)
+Xs       <- seq(-5, 5, len=100)
 # Assume that we have some known data points
 f       <- data.frame(x=c(-4,-3,-1,0,2,4, 5),
                       y=c(-1,1,1,1,-1,-2, 0))
-method  <- "normal"
+covFunc <- "covSE.iso"
+method  <- "cholesky"
+theta <- list(lambda=l, sf2=sf2, sn2=sn2)
 
 ##=================================
 # Call the GP Regression function #
 ##=================================
-GP      <- GP.fit(f, X, N, l, s.f, s.n, method)
-m.star  <- GP$E.f
-values  <- GP$values
+GP      <- GP.fit(theta, get(covFunc), f, Xs, method)
+mu      <- GP$E.f
+S2      <- GP$C.f
+
+# Create a lot of samples.  We could of course
+# simply plot a +/- 2 standard deviation confidence interval.
+values <- matrix(rep(0,length(Xs)*N), ncol=N)
+for (i in 1:N) { # Sample from a multivariate normal distribution
+  #values[,i] <- S2 %*% rnorm(length(mu)) + mu
+  values[,i] <- rmvnorm(1, mean=mu, sigma=S2, method="svd")
+  #values[,i] <- t(rmvnorm(1, mean=rep(0,length(mu)),sigma=S2,method="svd"))+mu
+}
+values <- cbind(x=Xs,as.data.frame(values))
+values <- melt(values,id="x")
 
 # Plot the result, including error bars on the observed points
 gg2 <- ggplot(values, aes(x=x,y=value)) + 
   geom_line(aes(group=variable), colour="grey80") +
-  geom_line(data=NULL,aes(x=X,y=m.star),colour="red", size=1) + 
-  geom_errorbar(data=f,aes(x=x,y=NULL,ymin=y-2*s.n, ymax=y+2*s.n), width=0.2) +
+  geom_line(data=NULL,aes(x=Xs,y=mu),colour="red", size=1) + 
+  geom_errorbar(data=f,aes(x=x,y=NULL,ymin=y-2*sn2, ymax=y+2*sn2), width=0.2) +
   geom_point(data=f,aes(x=x,y=y)) +
   theme_bw() +
   scale_y_continuous(lim=c(-3,3), name="output, f(x)") +
