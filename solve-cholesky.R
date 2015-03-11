@@ -6,12 +6,8 @@ solve.cholesky <- function(L, B){
   # Cholesky decomposition of A and the matrix B.           #
   # Example: X <- solve.cholesky(t(chol(A)), B)             #
   ##=========================================================
-  if (is.matrix(L)){
-    if ( (nrow(L) != ncol(L)) | (nrow(L)) != length(B) )
-      stop("Wrong sizes of matrix arguments.")
-  }else{
-    stop("First argument should be a square matrix.")
-  }
+  if ( (NROW(L) != NCOL(L)) | (NROW(L)) != NROW(B) )
+    stop("Wrong sizes of matrix arguments. First argument should be a square matrix")
   x <- solve(t(L), solve(L, B))
   return(x)
 }
