@@ -6,7 +6,7 @@ covSE.iso  <- function(theta, X1, X2){
   # where the P matrix is lambda^2 times the unit matrix    #
   # and sf2 is the signal variance.                         #
   # The hyperparameters are:                                #
-  #     theta = [lambda, sf2 ]                              #
+  #     theta = [ lambda, sf2 ]                             #
   ##=========================================================
   
   # Unpack the parameters
@@ -14,20 +14,20 @@ covSE.iso  <- function(theta, X1, X2){
     stop("Theta needs to be provided at least with 2 hyperparameters.")
   if (nargs() < 3)
     stop("Function requires 3 parameters.")
-  lambda  <- theta$lambda^2 # Length-scale parameter
-  sf2     <- theta$sf2^2    # Signal variance parameter
+  lambda    <- theta$lambda^2 # Length-scale parameter
+  sf2       <- theta$sf2^2    # Signal variance parameter
   
   # Divide by the square of length-scale lambda
-  X1 <- as.matrix(X1) / lambda
-  X2 <- as.matrix(X2) / lambda
+  X1        <- as.matrix(X1) / lambda
+  X2        <- as.matrix(X2) / lambda
   
   # Split by rows (i.e. to take D-dimensional data as a unit)
-  X1.rows <- split(X1, row(X1))
-  X2.rows <- split(X2, row(X2))
+  X1.rows   <- split(X1, row(X1))
+  X2.rows   <- split(X2, row(X2))
   
   # Vectorize the 'sq.dist' function so as to be able to call
   # the 'outer' function on sets of vectors.
-  Vec.Dist <- Vectorize(sq.dist)
+  Vec.Dist  <- Vectorize(sq.dist)
   
   # Compute distance of the D-dimensional data points
   cmpt.dist <- outer(X1.rows, X2.rows, FUN=Vec.Dist)
