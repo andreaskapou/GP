@@ -38,7 +38,8 @@ theta <- list(lambda=l, sf2=sf2, sn2=sn2)
 ##=================================
 # Call the GP Regression function #
 ##=================================
-GP      <- GP.fit(theta, get(covFunc), f, Xs, method)
+GP      <- GP.fit(theta, get(covFunc), f, Xs, method=method)
+print("FHUHFU")
 mu      <- GP$E.f
 S2      <- GP$C.f
 
