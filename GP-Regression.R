@@ -23,23 +23,28 @@ source("sq-dist.R")
 ##=======================
 set.seed(12345)   # Set a seed for repeatable plots
 N       <- 50     # Number of samples
-l       <- 1      # Length-scale parameter
-sf2     <- 1      # Singal variance
+l       <- .8     # Length-scale parameter
+sf2     <- .7     # Singal variance
 sn2     <- .05    # Noise variance
-# Define the points at which we want to define the functions
-Xs       <- seq(-5, 5, len=100)
-# Assume that we have some known data points
-f       <- data.frame(x=c(-4,-3,-1,0,2,4, 5),
-                      y=c(-1,1,1,1,-1,-2, 0))
-covFunc <- "covSE.iso"
+
+Xs      <- seq(-8, 8, len=100)  # Test data points
+covFunc <- "covSE.iso"  # Covariance function to be used
+covFunc <- get(covFunc) # Set the string as a variable
 method  <- "cholesky"
-theta <- list(lambda=l, sf2=sf2, sn2=sn2)
+theta   <- list(lambda=l, sf2=sf2, sn2=sn2)
+
+# Assume that we have some known data points
+x       <- as.vector(15 * (runif(20) - 0.5))
+y       <- as.vector(chol(covFunc(theta, x, x)) %*% rnorm(n))
+f       <- data.frame(x=x,
+                      y=y)
+#f       <- data.frame(x=c(-4,-3,-1,0,2,4, 5),
+#                      y=c(-1,1,1,1,-1,-2, 0))
 
 ##=================================
 # Call the GP Regression function #
 ##=================================
-GP      <- GP.fit(theta, get(covFunc), f, Xs, method=method)
-print("FHUHFU")
+GP      <- GP.fit(theta, covFunc, f, Xs, method=method)
 mu      <- GP$E.f
 S2      <- GP$C.f
 
@@ -61,5 +66,5 @@ gg2 <- ggplot(values, aes(x=x,y=value)) +
   geom_errorbar(data=f,aes(x=x,y=NULL,ymin=y-2*sn2, ymax=y+2*sn2), width=0.2) +
   geom_point(data=f,aes(x=x,y=y)) +
   theme_bw() +
-  scale_y_continuous(lim=c(-3,3), name="output, f(x)") +
+  scale_y_continuous(lim=c(-4,4), name="output, f(x)") +
   xlab("input, x")
