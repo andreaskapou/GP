@@ -66,9 +66,9 @@ GP.fit <- function(theta=list(lambda=1,sf2=1,sn2=0.05), covFunc, f, Xs, method="
       k.star  <- covFunc(theta,x,Xs)
       E.f     <- t(k.star) %*% a
       v       <- solve(L, k.star)
-      C.f     <- covFunc(theta,Xs,Xs) - t(v)%*%v #impractical for large datasets
-      #Kss     <- rep(theta$sn2^2 + 1, NROW(Xs))
-      #C.f     <- as.matrix(Kss) - as.matrix(colSums(v * v))
+      #C.f     <- covFunc(theta,Xs,Xs) - t(v)%*%v #impractical for large datasets
+      Kss     <- rep(theta$sn2^2 + 1, NROW(Xs))
+      C.f     <- as.matrix(Kss) - as.matrix(colSums(v * v))
     }
   }
   if (missing(Xs))

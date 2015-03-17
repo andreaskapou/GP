@@ -13,7 +13,7 @@ require(plyr)
 require(reshape2)
 require(ggplot2)
 require(mvtnorm)
-source("GP-fit.R")
+source("gp-regression.R")
 source("solve-cholesky.R")
 source("covSE-iso.R")
 source("sq-dist.R")
@@ -48,6 +48,11 @@ GP      <- GP.fit(theta, covFunc, f, Xs, method=method)
 mu      <- GP$E.f
 S2      <- GP$C.f
 
+# If we computed only diagonal covariance instead of all test point covariances
+if (dim(S2)[2] == 1){
+  S2 <- diag(as.vector(S2))
+} 
+
 # Create a lot of samples.  We could of course
 # simply plot a +/- 2 standard deviation confidence interval.
 values <- matrix(rep(0,length(Xs)*N), ncol=N)
@@ -66,5 +71,5 @@ gg2 <- ggplot(values, aes(x=x,y=value)) +
   geom_errorbar(data=f,aes(x=x,y=NULL,ymin=y-2*sn2, ymax=y+2*sn2), width=0.2) +
   geom_point(data=f,aes(x=x,y=y)) +
   theme_bw() +
-  scale_y_continuous(lim=c(-4,4), name="output, f(x)") +
+  scale_y_continuous(lim=c(-5,5), name="output, f(x)") +
   xlab("input, x")
