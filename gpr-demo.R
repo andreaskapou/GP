@@ -1,78 +1,70 @@
-GP.fit <- function(theta=list(lambda=1,sf2=1,sn2=0.05), covFunc, f, Xs, method="cholesky"){
-  ##=================================================================
-  # Gaussian process regression implementation. A valid covariance  #
-  # function can be given as a parameter. Two modes are possible:   # 
-  # 1) training: if no test data (Xs) are given, function returns   #
-  #       the negative log likelihood and its partial derivatives   #
-  #       with respect to the hyperparameters(NOT DONE YET); this   #
-  #       mode is used to fit the hyperparameters.                  #
-  # 2) prediction: If test data are given, then (marginal) Gaussian #
-  #       predictions are computed, whose mean and variance are     #
-  #       returned. Note that in cases where covariance function    # 
-  #       has noise contributions, the variance returned in S2 is   #
-  #       for noisy test targets; if you want the variance of the   #
-  #       noise-free latent function, you must substract the noise  #
-  #       variance.                                                 #
-  # Also, there are two modes of implementing the matrix inversion  #
-  # one is direct computation and the other uses the Cholesky       #
-  # factorization. Better to use the Cholesky factorization         # 
-  #                                                                 #
-  # usage: GP$NLML <- gpr(theta, covFunc, f, method)                #
-  #    or: (GP$E.f, GP$C.f) <- gpr(theta, covFunc, f, Xs, method)   #
-  #                                                                 #
-  # where:                                                          #
-  #   theta   is a list of hyperparameters                          #
-  #   covFunc is the covariance function                            #
-  #   f       is a list of D-dim training inputs and 1-dim targets  #
-  #   y       is a (column) vector (of size n) of targets           #
-  #   Xs      is a nn by D matrix of test inputs                    #
-  #   method  is the method used to compute the matrix inversion    #
-  #                                                                 #
-  #   NLML    is the value of the negative log marginal likelihood  #
-  #   DNLML   is a (column) vector of partial derivatives of the    #
-  #               negative log marginal likelihood wrt each log     #
-  #               hyperparameter                                    #
-  #   E.f     is a (column) vector (of size nn) of prediced means   #
-  #   C.f     is a (column) vector (of size nn) of predicted var    #
-  #                                                                 #                                                             #
-  # Adapted from (C) copyright 2006 by Carl Edward Rasmussen        #
-  # version in matlab.                                              #
-  # and notation mainly follows from Rasmussen and Williams's       #
-  # book 'Gaussian Processes for Machine Learning'                  #
-  ##=================================================================
-  
-  x       <- f$x
-  y       <- f$y
-  n       <- NROW(x)                # Length of the training data
-  I       <- diag(1, n)             # Identity matrix
-  
-  K       <- covFunc(theta, x, x)   # Covariance matrix of the training inputs
-  noise   <- theta$sn2^2 * I        # Calculate the white noise variance
-  
-  if (identical(method,"normal")){  # Compute using direct equations
-    invXX     <- solve(K + noise)
-    if (missing(Xs)){ # If no test points, just compute the marginal
-      NLML    <- -0.5*t(y) %*% invXX %*% y - 0.5*log(det(invXX)) - 0.5*n*log(2*pi)
-    }else{
-      E.f     <- covFunc(theta,Xs,x) %*% invXX %*% y
-      C.f     <- covFunc(theta,Xs,Xs)-covFunc(theta,Xs,x)%*%invXX%*%covFunc(theta,x,Xs)
-    }
-  }else if (identical(method,"cholesky")){  # Compute using Cholesky decomposition
-    L         <- t(chol(K + noise))
-    a         <- solve.cholesky(L, y)     # solve(t(L), solve(L, f$y))
-    if (missing(Xs)){ # If no test points, just compute the marginal
-      NLML    <- -0.5*t(y) %*% a - sum(log(diag(L))) - 0.5*n*log(2*pi)
-    }else{
-      k.star  <- covFunc(theta,x,Xs)
-      E.f     <- t(k.star) %*% a
-      v       <- solve(L, k.star)
-      C.f     <- covFunc(theta,Xs,Xs) - t(v)%*%v #impractical for large datasets
-      #Kss     <- rep(theta$sn2^2 + 1, NROW(Xs))
-      #C.f     <- as.matrix(Kss) - as.matrix(colSums(v * v))
-    }
-  }
-  if (missing(Xs))
-    return(list(NLML=NLML))
-  else
-    return(list(E.f=E.f, C.f=C.f))
+# Chapter 2 of Rasmussen and Williams's book `Gaussian Processes
+# for Machine Learning' provides a detailed explanation of the
+# math for Gaussian process regression.
+
+##===============================
+# Set the working directory and #
+# load any required libraries   #
+##===============================
+cur.dir <- dirname(parent.frame(2)$ofile)
+setwd(cur.dir)
+require(MASS)
+require(plyr)
+require(reshape2)
+require(ggplot2)
+require(mvtnorm)
+source("GP-fit.R")
+source("solve-cholesky.R")
+source("covSE-iso.R")
+source("sq-dist.R")
+
+##=======================
+# Initialize parameters #
+##=======================
+set.seed(12345)   # Set a seed for repeatable plots
+N       <- 50     # Number of samples
+l       <- .8     # Length-scale parameter
+sf2     <- .7     # Singal variance
+sn2     <- .05    # Noise variance
+
+Xs      <- seq(-8, 8, len=100)  # Test data points
+covFunc <- "covSE.iso"  # Covariance function to be used
+covFunc <- get(covFunc) # Set the string as a variable
+method  <- "cholesky"
+theta   <- list(lambda=l, sf2=sf2, sn2=sn2)
+
+# Assume that we have some known data points
+x       <- as.vector(15 * (runif(20) - 0.5))
+y       <- as.vector(chol(covFunc(theta, x, x)) %*% rnorm(n))
+f       <- data.frame(x=x,
+                      y=y)
+#f       <- data.frame(x=c(-4,-3,-1,0,2,4, 5),
+#                      y=c(-1,1,1,1,-1,-2, 0))
+
+##=================================
+# Call the GP Regression function #
+##=================================
+GP      <- GP.fit(theta, covFunc, f, Xs, method=method)
+mu      <- GP$E.f
+S2      <- GP$C.f
+
+# Create a lot of samples.  We could of course
+# simply plot a +/- 2 standard deviation confidence interval.
+values <- matrix(rep(0,length(Xs)*N), ncol=N)
+for (i in 1:N) { # Sample from a multivariate normal distribution
+  #values[,i] <- S2 %*% rnorm(length(mu)) + mu
+  values[,i] <- rmvnorm(1, mean=mu, sigma=S2, method="svd")
+  #values[,i] <- t(rmvnorm(1, mean=rep(0,length(mu)),sigma=S2,method="svd"))+mu
 }
+values <- cbind(x=Xs,as.data.frame(values))
+values <- melt(values,id="x")
+
+# Plot the result, including error bars on the observed points
+gg2 <- ggplot(values, aes(x=x,y=value)) + 
+  geom_line(aes(group=variable), colour="grey80") +
+  geom_line(data=NULL,aes(x=Xs,y=mu),colour="red", size=1) + 
+  geom_errorbar(data=f,aes(x=x,y=NULL,ymin=y-2*sn2, ymax=y+2*sn2), width=0.2) +
+  geom_point(data=f,aes(x=x,y=y)) +
+  theme_bw() +
+  scale_y_continuous(lim=c(-4,4), name="output, f(x)") +
+  xlab("input, x")
