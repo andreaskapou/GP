@@ -34,12 +34,13 @@ method  <- "cholesky"
 theta   <- list(lambda=l, sf2=sf2, sn2=sn2)
 
 # Assume that we have some known data points
-x       <- as.vector(15 * (runif(20) - 0.5))
+n       <- 20
+x       <- as.vector(15 * (runif(n) - 0.5))
 y       <- as.vector(chol(covFunc(theta, x, x)) %*% rnorm(n))
 f       <- data.frame(x=x,
                       y=y)
-#f       <- data.frame(x=c(-4,-3,-1,0,2,4, 5),
-#                      y=c(-1,1,1,1,-1,-2, 0))
+f       <- data.frame(x=c(-4,-3,-1,0,2,4, 5),
+                      y=c(-1,1,1,1,-1,-2, 0))
 
 ##=================================
 # Call the GP Regression function #
@@ -51,7 +52,7 @@ S2      <- GP$C.f
 # If we computed only diagonal covariance instead of all test point covariances
 if (dim(S2)[2] == 1){
   S2 <- diag(as.vector(S2))
-} 
+}
 
 # Create a lot of samples.  We could of course
 # simply plot a +/- 2 standard deviation confidence interval.
