@@ -20,15 +20,19 @@ source("sq-dist.R")
 source("meshgrid.R")
 
 
-cumGauss <- function(f, y){
-  Phi <- pnorm(f*y) + 1e-10 # Cumulative Density Function of N(0,1)
-  N   <- dnorm(f)           # Density for function f under N(0,1)
-  lp  <- sum(log(Phi))      # log p(y|f)  log likelihood
-  d1lp <- y*N / Phi         # 1st derivative
-  d2lp <- - N^2 / Phi^2 - (y*f*N)/Phi  # 2nd derivative
-  d3lp <- 3*f*N^2/Phi^2 + 2*y*N^3/Phi^3 + y*N*(f^2-1)/Phi # 3rd derivative
-  
-  return(list(lp=lp, d1lp=d1lp, d2lp=d2lp, d3lp=d3lp))
+cumGauss <- function(f, y, pred){
+  if (missing(pred)){
+    Phi   <- pnorm(f*y) + 1e-10 # Cumulative Density Function of N(0,1)
+    N     <- dnorm(f)           # Density for function f under N(0,1)
+    lp    <- sum(log(Phi))      # log p(y|f)  log likelihood
+    d1lp  <- y*N / Phi          # 1st derivative
+    d2lp  <- (- N^2 / Phi^2) - (y*f*N)/Phi  # 2nd derivative
+    d3lp  <- 3*f*N^2/Phi^2 + 2*y*N^3/Phi^3 + y*N*(f^2-1)/Phi # 3rd derivative
+    
+    return(list(lp=lp, d1lp=d1lp, d2lp=d2lp, d3lp=d3lp))
+  }else{
+    pi.star <- pnorm(f)   # Need to compute the average likelihood
+  }
 }
 
 
@@ -51,9 +55,9 @@ x2 <- mvrnorm(n2, mu=mu2, Sigma=S2)
 x <- rbind(x1, x2)  # Inputs of training data
 y <- c(rep(-1, n1), rep(1, n2)) # Outputs of training data
   
-t1 <- seq(from=-4, to=4, by=0.5)   # Test data
+t1 <- seq(from=-4, to=4, by=0.1)   # Test data
 t <- meshgrid(t1, t1)
-t <- cbind(as.vector(t$x),  as.vector(t$y))
+Xs <- cbind(as.vector(t$x),  as.vector(t$y))
 
 ##=======================
 # Initialize parameters #
@@ -71,17 +75,16 @@ I       <- diag(1, n)   # Identity matrix
 tol     <- 1e-6;        # Tolerance for when to stop the Newton iterations
 K       <- covFunc(theta, x, x)   # Covariance matrix of the training data
 
-f <- rep(0, n)    # Initial points for f
-a <- f            # Initial points for a
-Phi <- cumGauss(f, y) # Compute Normal CDF and its derivatives
+a = f   <- rep(0, n)    # Initial points for f and a
+Phi     <- cumGauss(f, y) # Compute Normal CDF and its derivatives
 
-Psi_new <- -n*log(2)  # Objective initial value
-Psi_old = -Inf        # Make sure Newton iteration starts
+Psi_new <- (-n*log(2))    # Objective initial value
+Psi_old <- (-Inf)        # Make sure Newton iteration starts
 
 while (Psi_new - Psi_old > tol){
   Psi_old <- Psi_new      # Set old objective to new
   a_old   <- a            # Keep a copy in case objective does not decrease
-  W       <- -Phi$d2lp    # W = -DDlog p(y|f)
+  W       <- (-Phi$d2lp)  # W = -DDlog p(y|f)
   sW      <- sqrt(W)      # Compute W^1/2
   L       <- t(chol(I + sW %*% t(sW) * K))   # B = I + W^1/2*K*W^1/2
   b       <- W*f + Phi$d1lp   # b = Wf + Dlog p(y|f)
@@ -89,8 +92,8 @@ while (Psi_new - Psi_old > tol){
   f       <- K %*% a      # update f   (note that a = K^-1*f)
   Phi     <- cumGauss(f, y) # update Phi using the updated f_new
   
-  Psi_new <- (-t(a) %*% f/2) + Phi$lp # objective: -1/2 a'*f + log p(y|f)
-                                      #       i.e. -1/2 f'*K^-1*f + log p(y|f)
+  Psi_new <- (-t(a)%*%f/2) + Phi$lp # objective: -1/2 a'*f + log p(y|f)
+                                    #       i.e. -1/2 f'*K^-1*f + log p(y|f)
   i       <- 0
   while ((i < 10) & (Psi_new < Psi_old)){ # If objective didn't increase
     a     <- (a_old+a)/2;                 # Reduce step size by half
@@ -100,3 +103,22 @@ while (Psi_new - Psi_old > tol){
     i <- i+1
   }
 }
+
+W       <- (-Phi$d2lp)  # W = -DDlog p(y|f)
+sW      <- sqrt(W)      # Compute W^1/2
+L       <- t(chol(I + sW %*% t(sW) * K))   # B = I + W^1/2*K*W^1/2
+
+NLML    <- t(a)%*%f/2 - Phi$lp + sum(log(diag(L)))  # Approx neg log marginal lik 
+
+# Compute predictive probabilities
+k.star  <- covFunc(theta,x,Xs)
+E.f     <- t(k.star) %*% Phi$d1lp
+sW.k    <- matrix(sW, nrow=length(sW), ncol=NROW(Xs)) * k.star
+v       <- solve(t(L), sW.k)
+
+#C.f     <- covFunc(theta,Xs,Xs) - t(v)%*%v #impractical for large datasets
+Kss     <- rep(theta$sn2^2 + 1, NROW(Xs))
+C.f     <- as.matrix(Kss) - as.matrix(colSums(v * v))
+
+
+
