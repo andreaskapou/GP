@@ -56,7 +56,16 @@ theta   <- list(lambda=l, sf2=sf2)
 
 
 
-
+cumGauss <- function(f, y){
+  Phi <- pnorm(f*y) + 1e-10 # Cumulative Density Function of N(0,1)
+  N   <- dnorm(f)           # Density for function f under N(0,1)
+  lp  <- sum(log(Phi))      # log p(y|f)  log likelihood
+  d1lp <- y*N / Phi         # 1st derivative
+  d2lp <- - N^2 / Phi^2 - (y*f*N)/Phi  # 2nd derivative
+  d3lp <- 3*f*N^2/Phi^2 + 2*y*N^3/Phi^3 + y*N*(f^2-1)/Phi # 3rd derivative
+  
+  return(list(lp=lp, d1lp=d1lp, d2lp=d2lp, d3lp=d3lp))
+}
 
 
 
