@@ -18,70 +18,54 @@ source("solve-cholesky.R")
 source("covSE-iso.R")
 source("sq-dist.R")
 source("meshgrid.R")
-
-
-cumGauss <- function(f, y, pred){
-  if (missing(pred)){
-    Phi   <- pnorm(f*y) + 1e-10 # Cumulative Density Function of N(0,1)
-    N     <- dnorm(f)           # Density for function f under N(0,1)
-    lp    <- sum(log(Phi))      # log p(y|f)  log likelihood
-    d1lp  <- y*N / Phi          # 1st derivative
-    d2lp  <- (- N^2 / Phi^2) - (y*f*N)/Phi  # 2nd derivative
-    d3lp  <- 3*f*N^2/Phi^2 + 2*y*N^3/Phi^3 + y*N*(f^2-1)/Phi # 3rd derivative
-    
-    return(list(lp=lp, d1lp=d1lp, d2lp=d2lp, d3lp=d3lp))
-  }else{
-    pi.star <- pnorm(f)   # Need to compute the average likelihood
-  }
-}
-
+source("cumGauss.R")
 
 ##=======================
 # Generate data set #
 ##=======================
 set.seed(12345)   # Set a seed for repeatable plots
-n1 <- 80          # Number of data points from each class
-n2 <- 40
-
+n1  <- 80         # Number of data points from each class
+n2  <- 40
 mu1 <- c(1,0)     # Two mean vectors
 mu2 <- c(-1,0)
+S1  <- diag(2)    # Two covatriance matrices
+S2  <- matrix(c(1, 0.95, 0.95, 1), nrow=2, ncol=2)
+x1  <- mvrnorm(n1, mu=mu1, Sigma=S1)
+x2  <- mvrnorm(n2, mu=mu2, Sigma=S2)
 
-S1 <- diag(2)     # Two covatriance matrices
-S2 <- matrix(c(1, 0.95, 0.95, 1), nrow=2, ncol=2)
+x   <- rbind(x1, x2)                # Inputs of training data
+y   <- c(rep(-1, n1), rep(1, n2))   # Outputs of training data
+t1  <- seq(from=-4, to=4, by=0.1)   # Test data
+t   <- meshgrid(t1, t1)
+Xs  <- cbind(as.vector(t$x),  as.vector(t$y))
 
-x1 <- mvrnorm(n1, mu=mu1, Sigma=S1)
-x2 <- mvrnorm(n2, mu=mu2, Sigma=S2)
-
-x <- rbind(x1, x2)  # Inputs of training data
-y <- c(rep(-1, n1), rep(1, n2)) # Outputs of training data
-  
-t1 <- seq(from=-4, to=4, by=0.1)   # Test data
-t <- meshgrid(t1, t1)
-Xs <- cbind(as.vector(t$x),  as.vector(t$y))
 
 ##=======================
 # Initialize parameters #
 ##=======================
 l       <- 1     # Length-scale parameter
 sf2     <- 1     # Singal variance
-
+theta   <- list(lambda=l, sf2=sf2)
 covFunc <- "covSE.iso"  # Covariance function to be used
 covFunc <- get(covFunc) # Set the string as a variable
 
-theta   <- list(lambda=l, sf2=sf2)
 n       <- NROW(x)      # Length of the training data
 I       <- diag(1, n)   # Identity matrix
 
 tol     <- 1e-6;        # Tolerance for when to stop the Newton iterations
 K       <- covFunc(theta, x, x)   # Covariance matrix of the training data
 
-a = f   <- rep(0, n)    # Initial points for f and a
+
+##=====================================
+# Newton's Algorithm for finding the  #
+# mode for the Laplace approximation  #
+##=====================================
+a = f   <- rep(0, n)      # Initial points for f and a
 Phi     <- cumGauss(f, y) # Compute Normal CDF and its derivatives
-
 Psi_new <- (-n*log(2))    # Objective initial value
-Psi_old <- (-Inf)        # Make sure Newton iteration starts
+Psi_old <- (-Inf)         # Make sure Newton iteration starts
 
-while (Psi_new - Psi_old > tol){
+while (Psi_new-Psi_old > tol){
   Psi_old <- Psi_new      # Set old objective to new
   a_old   <- a            # Keep a copy in case objective does not decrease
   W       <- (-Phi$d2lp)  # W = -DDlog p(y|f)
@@ -102,8 +86,13 @@ while (Psi_new - Psi_old > tol){
     Psi_new <- (-t(a) %*% f/2) + Phi$lp
     i <- i+1
   }
+  print(Psi_new)
 }
 
+
+##=======================
+# Laplace Approximation #
+##=======================
 W       <- (-Phi$d2lp)  # W = -DDlog p(y|f)
 sW      <- sqrt(W)      # Compute W^1/2
 L       <- t(chol(I + sW %*% t(sW) * K))   # B = I + W^1/2*K*W^1/2
@@ -117,8 +106,6 @@ sW.k    <- matrix(sW, nrow=length(sW), ncol=NROW(Xs)) * k.star
 v       <- solve(t(L), sW.k)
 
 #C.f     <- covFunc(theta,Xs,Xs) - t(v)%*%v #impractical for large datasets
-Kss     <- rep(theta$sn2^2 + 1, NROW(Xs))
+Kss     <- rep(theta$sf2^2 + 1, NROW(Xs))
 C.f     <- as.matrix(Kss) - as.matrix(colSums(v * v))
-
-
 
