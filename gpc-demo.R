@@ -20,6 +20,18 @@ source("sq-dist.R")
 source("meshgrid.R")
 
 
+cumGauss <- function(f, y){
+  Phi <- pnorm(f*y) + 1e-10 # Cumulative Density Function of N(0,1)
+  N   <- dnorm(f)           # Density for function f under N(0,1)
+  lp  <- sum(log(Phi))      # log p(y|f)  log likelihood
+  d1lp <- y*N / Phi         # 1st derivative
+  d2lp <- - N^2 / Phi^2 - (y*f*N)/Phi  # 2nd derivative
+  d3lp <- 3*f*N^2/Phi^2 + 2*y*N^3/Phi^3 + y*N*(f^2-1)/Phi # 3rd derivative
+  
+  return(list(lp=lp, d1lp=d1lp, d2lp=d2lp, d3lp=d3lp))
+}
+
+
 ##=======================
 # Generate data set #
 ##=======================
@@ -53,36 +65,38 @@ covFunc <- "covSE.iso"  # Covariance function to be used
 covFunc <- get(covFunc) # Set the string as a variable
 
 theta   <- list(lambda=l, sf2=sf2)
+n       <- NROW(x)      # Length of the training data
+I       <- diag(1, n)   # Identity matrix
 
+tol     <- 1e-6;        # Tolerance for when to stop the Newton iterations
+K       <- covFunc(theta, x, x)   # Covariance matrix of the training data
 
+f <- rep(0, n)    # Initial points for f
+a <- f            # Initial points for a
+Phi <- cumGauss(f, y) # Compute Normal CDF and its derivatives
 
-cumGauss <- function(f, y){
-  Phi <- pnorm(f*y) + 1e-10 # Cumulative Density Function of N(0,1)
-  N   <- dnorm(f)           # Density for function f under N(0,1)
-  lp  <- sum(log(Phi))      # log p(y|f)  log likelihood
-  d1lp <- y*N / Phi         # 1st derivative
-  d2lp <- - N^2 / Phi^2 - (y*f*N)/Phi  # 2nd derivative
-  d3lp <- 3*f*N^2/Phi^2 + 2*y*N^3/Phi^3 + y*N*(f^2-1)/Phi # 3rd derivative
+Psi_new <- -n*log(2)  # Objective initial value
+Psi_old = -Inf        # Make sure Newton iteration starts
+
+while (Psi_new - Psi_old > tol){
+  Psi_old <- Psi_new      # Set old objective to new
+  a_old   <- a            # Keep a copy in case objective does not decrease
+  W       <- -Phi$d2lp    # W = -DDlog p(y|f)
+  sW      <- sqrt(W)      # Compute W^1/2
+  L       <- t(chol(I + sW %*% t(sW) * K))   # B = I + W^1/2*K*W^1/2
+  b       <- W*f + Phi$d1lp   # b = Wf + Dlog p(y|f)
+  a       <- b - sW * solve.cholesky(L, sW*(K%*%b)) # b - W^1/2*B^-1*W^1/2*K*b
+  f       <- K %*% a      # update f   (note that a = K^-1*f)
+  Phi     <- cumGauss(f, y) # update Phi using the updated f_new
   
-  return(list(lp=lp, d1lp=d1lp, d2lp=d2lp, d3lp=d3lp))
+  Psi_new <- (-t(a) %*% f/2) + Phi$lp # objective: -1/2 a'*f + log p(y|f)
+                                      #       i.e. -1/2 f'*K^-1*f + log p(y|f)
+  i       <- 0
+  while ((i < 10) & (Psi_new < Psi_old)){ # If objective didn't increase
+    a     <- (a_old+a)/2;                 # Reduce step size by half
+    f     <- K %*% a        
+    Phi   <- cumGauss(f, y)
+    Psi_new <- (-t(a) %*% f/2) + Phi$lp
+    i <- i+1
+  }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
