@@ -46,13 +46,13 @@ newton.optimization <- function(K, y, lik, tol){
     
     Psi_new <- (-t(a)%*%f/2) + Phi$lp # objective: -1/2 a'*f + log p(y|f)
                                       #       i.e. -1/2 f'*K^{-1}*f + log p(y|f)
-    i       <- 0
+    i         <- 0
     while ((i < 10) & (Psi_new < Psi_old)){ # If objective didn't increase ...
-      a     <- (a_old + a)/2                # Reduce step size by half
-      f     <- K %*% a        
-      Phi   <- lik(f, y)
+      a       <- (a_old + a)/2                # Reduce step size by half
+      f       <- K %*% a        
+      Phi     <- lik(f, y)
       Psi_new <- (-t(a) %*% f/2) + Phi$lp
-      i <- i+1                              # Repeat at most 10 times
+      i       <- i+1                          # Repeat at most 10 times
     }
   }
   return(list(Phi=Phi, a=a, f=f))
