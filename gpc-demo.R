@@ -13,7 +13,7 @@ require(plyr)
 require(reshape2)
 require(ggplot2)
 require(mvtnorm)
-source("gp-classification.R")
+source("gpc-Laplace.R")
 source("solve-cholesky.R")
 source("covSE-iso.R")
 source("sq-dist.R")
@@ -44,42 +44,20 @@ Xs  <- cbind(as.vector(t$x),  as.vector(t$y))
 ##=======================
 # Initialize parameters #
 ##=======================
-l       <- 1     # Length-scale parameter
-sf2     <- 1     # Singal variance
-theta   <- list(lambda=l, sf2=sf2)
+l       <- 1      # Length-scale parameter
+sf2     <- 1      # Singal variance
+sn2     <- 0.01   # Noise variance
+theta   <- list(lambda=l, sf2=sf2, sn2=sn2)
+
+tol     <- 1e-6;        # Tolerance for when to stop Newton iterations
 covFunc <- "covSE.iso"  # Covariance function to be used
 covFunc <- get(covFunc) # Set the string as a variable
 
-n       <- NROW(x)      # Length of the training data
-I       <- diag(1, n)   # Identity matrix
+lik     <- "cumGauss"   # Likelihood function
+lik     <- get(lik)     # Set the string as a variable
 
-tol     <- 1e-6;        # Tolerance for when to stop the Newton iterations
-K       <- covFunc(theta, x, x)   # Covariance matrix of the training data
-
-##===================================
-# Call the Newton's method function #
-##===================================
-N.mode  <- newton.optimization(K, y, tol)
-Phi     <- N.mode$Phi
-a       <- N.mode$a
-f       <- N.mode$f
-
-##=======================
-# Laplace Approximation #
-##=======================
-W       <- (-Phi$d2lp)  # W = -DDlog p(y|f)
-sW      <- sqrt(W)      # Compute W^1/2
-L       <- t(chol(I + sW %*% t(sW) * K))   # B = I + W^1/2*K*W^1/2
-
-NLML    <- t(a)%*%f/2 - Phi$lp + sum(log(diag(L)))  # Approx neg log marginal lik 
-
-# Compute predictive probabilities
-k.star  <- covFunc(theta,x,Xs)
-E.f     <- t(k.star) %*% Phi$d1lp
-sW.k    <- matrix(sW, nrow=length(sW), ncol=NROW(Xs)) * k.star
-v       <- solve(t(L), sW.k)
-
-#C.f     <- covFunc(theta,Xs,Xs) - t(v)%*%v #impractical for large datasets
-Kss     <- rep(theta$sf2^2*0.001 + 1, NROW(Xs))
-C.f     <- as.matrix(Kss) - as.matrix(colSums(v * v))
-
+##========================================#
+# Call the Laplace approximation function #
+# for GP Classification                   #
+##=========================================
+GP <- gpc.Laplace(theta, covfunc, lik, x, y, Xs, tol)
