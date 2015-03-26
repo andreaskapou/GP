@@ -59,11 +59,10 @@ K       <- covFunc(theta, x, x)   # Covariance matrix of the training data
 ##===================================
 # Call the Newton's method function #
 ##===================================
-A.mode  <- newton.optimization(K, y, tol)
-Phi     <- A.mode$Phi
-a       <- A.mode$a
-f       <- A.mode$f
-
+N.mode  <- newton.optimization(K, y, tol)
+Phi     <- N.mode$Phi
+a       <- N.mode$a
+f       <- N.mode$f
 
 ##=======================
 # Laplace Approximation #
@@ -81,6 +80,6 @@ sW.k    <- matrix(sW, nrow=length(sW), ncol=NROW(Xs)) * k.star
 v       <- solve(t(L), sW.k)
 
 #C.f     <- covFunc(theta,Xs,Xs) - t(v)%*%v #impractical for large datasets
-Kss     <- rep(theta$sf2^2 + 1, NROW(Xs))
+Kss     <- rep(theta$sf2^2*0.001 + 1, NROW(Xs))
 C.f     <- as.matrix(Kss) - as.matrix(colSums(v * v))
 
