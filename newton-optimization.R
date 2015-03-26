@@ -1,0 +1,57 @@
+newton.optimization <- function(K, y, tol){
+  ##=====================================================================
+  # Newton's Method for finding the mode of the posterior distribution  #
+  # which is log-concave and thus contains a unique maximum.            #
+  #                                                                     #
+  # Thus, we need to find f^{hat} = argmax_{f} p(f|X,y), that is in     #
+  # the Newton iterations f^{new} := f - (DD Psi(f))^{-1} D Psi(f).     #
+  #                                                                     #
+  # The found mode will be used as the mean of the Gaussian when doing  #
+  # Laplace approximation and covariance matrix will be approximated by #
+  # the curvature at the mode, which is equal to the inverse Hessian    #
+  #                                                                     #
+  # Implementation follows Algorithm 3.1 p.46 from Rasmussen & Williams #
+  # book 'Gaussian Processes for Machine Learning'                      #
+  #                                                                     #
+  # Input:                                                              #
+  #     K   is covariance matrix on training points                     #
+  #     y   is a vector with target values (+1 or -1)                   #
+  #     tol is the tolerance for when to stop the Newton iterations     #
+  # Output:                                                             #
+  #     Phi is an object containing the Normal CDF and its derivatives  #
+  #     a   needed for later computations since a = K^{-1} * f          #
+  #     f   is the posterior mode                                       #
+  #                                                                     #
+  ##=====================================================================
+  n       <- NROW(K)        # Length of the training data
+  I       <- diag(1, n)     # Identity matrix
+  a = f   <- rep(0, n)      # Initial points for f and a
+  
+  Phi     <- cumGauss(f, y) # Compute Normal CDF and its derivatives
+  Psi_new <- (-n*log(2))    # Objective initial value
+  Psi_old <- (-Inf)         # Make sure Newton iteration starts
+  
+  while (Psi_new-Psi_old > tol){  # Begin Newton's iterations
+    Psi_old <- Psi_new
+    a_old   <- a            # Keep a copy in case objective does not decrease
+    W       <- (-Phi$d2lp)  # W = -DDlog p(y|f)
+    sW      <- sqrt(W)      # Compute W^1/2
+    L       <- t(chol(I + sW %*% t(sW) * K))   # B = I + W^1/2*K*W^1/2
+    b       <- W*f + Phi$d1lp   # b = Wf + Dlog p(y|f)
+    a       <- b - sW * solve.cholesky(L, sW*(K%*%b)) # b - W^1/2*B^-1*W^1/2*K*b
+    f       <- K %*% a      # update f   (note that a = K^-1*f)
+    Phi     <- cumGauss(f, y) # update Phi using the updated f_new
+    
+    Psi_new <- (-t(a)%*%f/2) + Phi$lp # objective: -1/2 a'*f + log p(y|f)
+                                      #       i.e. -1/2 f'*K^-1*f + log p(y|f)
+    i       <- 0
+    while ((i < 10) & (Psi_new < Psi_old)){ # If objective didn't increase
+      a     <- (a_old+a)/2;                 # Reduce step size by half
+      f     <- K %*% a        
+      Phi   <- cumGauss(f, y)
+      Psi_new <- (-t(a) %*% f/2) + Phi$lp
+      i <- i+1
+    }
+  }
+  return(list(Phi=Phi, a=a, f=f))
+}
