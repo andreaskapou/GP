@@ -1,4 +1,4 @@
-GP.fit <- function(theta=list(lambda=1,sf2=1,sn2=0.05), covFunc, f, Xs, method="cholesky"){
+GP.fit <- function(theta=list(lambda=1,sf2=1,sn2=0.05),covFunc,f,Xs,method="cholesky"){
   ##=================================================================
   # Gaussian process regression implementation. A valid covariance  #
   # function can be given as a parameter. Two modes are possible:   # 
@@ -37,10 +37,10 @@ GP.fit <- function(theta=list(lambda=1,sf2=1,sn2=0.05), covFunc, f, Xs, method="
   #                                                                 #                                                             #
   # Adapted from (C) copyright 2006 by Carl Edward Rasmussen        #
   # version in matlab.                                              #
-  # and notation mainly follows from Rasmussen and Williams's       #
-  # book 'Gaussian Processes for Machine Learning'                  #
+  # Notation mainly follows from Rasmussen and Williams's book      #
+  # 'Gaussian Processes for Machine Learning'                       #
+  #                                                                 #
   ##=================================================================
-  
   x       <- f$x
   y       <- f$y
   n       <- NROW(x)                # Length of the training data
@@ -59,16 +59,16 @@ GP.fit <- function(theta=list(lambda=1,sf2=1,sn2=0.05), covFunc, f, Xs, method="
     }
   }else if (identical(method,"cholesky")){  # Compute using Cholesky decomposition
     L         <- t(chol(K + noise))
-    a         <- solve.cholesky(L, y)     # solve(t(L), solve(L, f$y))
+    a         <- solve.cholesky(L, y)       # solve(t(L), solve(L, f$y))
     if (missing(Xs)){ # If no test points, just compute the marginal
       NLML    <- -0.5*t(y) %*% a - sum(log(diag(L))) - 0.5*n*log(2*pi)
     }else{
       k.star  <- covFunc(theta,x,Xs)
-      E.f     <- t(k.star) %*% a
+      E.f     <- t(k.star) %*% a            # Latent means
       v       <- solve(L, k.star)
-      #C.f     <- covFunc(theta,Xs,Xs) - t(v)%*%v #impractical for large datasets
+      #C.f    <- covFunc(theta,Xs,Xs) - t(v)%*%v #impractical for large datasets
       Kss     <- rep(theta$sn2^2 + 1, NROW(Xs))
-      C.f     <- as.matrix(Kss) - as.matrix(colSums(v * v))
+      C.f     <- as.matrix(Kss) - as.matrix(colSums(v * v)) # Latent variances
     }
   }
   if (missing(Xs))
