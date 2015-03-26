@@ -33,7 +33,9 @@ cumGauss <- function(f, y, pred){
     d3lp  <- 3*f*N^2/Phi^2 + 2*y*N^3/Phi^3 + y*N*(f^2-1)/Phi # 3rd derivative
     return(list(lp=lp, d1lp=d1lp, d2lp=d2lp, d3lp=d3lp))
   }else{
-    pi.pred <- pnorm(f)   # Need to compute the average likelihood
+    pi.pred <- pnorm(f/sqrt(1 + y)) # Approximate predictive probability for 
+                                    # the probit likelihood i.e.
+                                    # p(y*=1|D,t,x*) = N.CDF((m*/sqrt(1+s2*)))
     return(pi.pred)
   }
 }
