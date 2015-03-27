@@ -60,6 +60,11 @@ gpc.Laplace <- function(theta=list(lambda=1,sf2=1,sn2=0.001),covfunc,lik,x,y,Xs,
   # Approximate negative log marginal likelihood 
   NLML    <- t(NO$a)%*%NO$f/2 - NO$Phi$lp + sum(log(diag(L)))
   if (missing(Xs)){
+    # Calculate Z = W^{1/2}*(I + W^{1/2}*K*W^{1/2})^{-1}*W^{1/2} using Cholesky
+    Z     <- matrix(sW, nrow=length(sW), ncol=n) * solve.cholesky(L, diag(as.vector(sW)))
+    sW.K  <- matrix(sW, nrow=length(sW), ncol=n) * K
+    C     <- solve(L, sW.K)
+    s2    <- -0.5*(diag(K) - as.matrix(colSums(C^2))) * NO$Phi$d3lp
     return(list(NLML=NLML))
   }else{
     # Compute predictive probabilities
