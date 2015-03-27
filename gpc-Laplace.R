@@ -60,18 +60,19 @@ gpc.Laplace <- function(theta=list(lambda=1,sf2=1,sn2=0.001),covfunc,lik,x,y,Xs,
   # Approximate negative log marginal likelihood 
   NLML    <- t(NO$a)%*%NO$f/2 - NO$Phi$lp + sum(log(diag(L)))
   if (missing(Xs)){
-    # Calculate Z = W^{1/2}*(I + W^{1/2}*K*W^{1/2})^{-1}*W^{1/2} using Cholesky
-    Z     <- matrix(sW, nrow=length(sW), ncol=n) * solve.cholesky(L, diag(as.vector(sW)))
-    sW.K  <- matrix(sW, nrow=length(sW), ncol=n) * K
-    C     <- solve(L, sW.K)
-    s2    <- -0.5*(diag(K) - as.matrix(colSums(C^2))) * NO$Phi$d3lp
+            # Z = W^{1/2}*(I + W^{1/2}*K*W^{1/2})^{-1}*W^{1/2} using Cholesky
+    Z     <- matrix(sW, nrow=length(sW), ncol=n)*solve.cholesky(L, diag(as.vector(sW)))
+            # C = L\(W^{1/2}*K)
+    C     <- solve(L, matrix(sW, nrow=length(sW), ncol=n)*K)
+            #?????
+    s2    <- -0.5*(diag(K) - as.matrix(colSums(C^2)))*(-NO$Phi$d3lp)
     return(list(NLML=NLML))
   }else{
     # Compute predictive probabilities
     k.star  <- covFunc(theta,x,Xs)
     E.f     <- t(k.star) %*% NO$Phi$d1lp      # Latent means
-    sW.k    <- matrix(sW, nrow=length(sW), ncol=NROW(Xs)) * k.star
-    v       <- solve(L, sW.k)
+              # v = L\(W^{1/2}*k(x*))
+    v       <- solve(L, matrix(sW,nrow=length(sW),ncol=NROW(Xs))*k.star)
     #C.f    <- covFunc(theta,Xs,Xs)-t(v)%*%v  # Impractical for large datasets
     Kss     <- rep(theta$sn2^2 + 1, NROW(Xs))
     C.f     <- as.matrix(Kss) - as.matrix(colSums(v * v)) # Latent variances
