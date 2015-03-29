@@ -1,4 +1,4 @@
-covSE.iso  <- function(theta, X1, X2){
+covSE.iso  <- function(theta, X1, X2, der){
   ##=========================================================
   # Squared Exponential covariance function with isotropic  #
   # distance measure. The covariance is parameterized as:   #
@@ -7,6 +7,12 @@ covSE.iso  <- function(theta, X1, X2){
   # and sf2 is the signal variance.                         #
   # The hyperparameters are:                                #
   #     theta = [ lambda, sf2 ]                             #
+  #                                                         #
+  # If 'der' parameter is passed, the derivatives of the SE #
+  # function are computed w.r.t. the hyperparameters.       #
+  # So when:                                                #
+  #     der == 1: derivatives wrt lambda                    #
+  #     der == 2: derivatives wrt sf2                       #
   ##=========================================================
   
   # Unpack the parameters
@@ -30,6 +36,16 @@ covSE.iso  <- function(theta, X1, X2){
   Vec.Dist  <- Vectorize(sq.dist)
   
   # Compute distance of the D-dimensional data points
-  cmpt.dist <- outer(X1.rows, X2.rows, FUN=Vec.Dist)
-  return(sf2 * exp(-0.5 * cmpt.dist))
+  K <- outer(X1.rows, X2.rows, FUN=Vec.Dist)
+  if (missing(der)){
+    return(sf2 * exp(-0.5*K))
+  }else{
+    if (der==1){
+      return(sf2 * exp(-0.5*K) * K)
+    }else if (der==2){
+      return(2 * sf2 * exp(-0.5*K))
+    }else{
+      stop("Unknown hyperparameter derivative")
+    }
+  }
 }
