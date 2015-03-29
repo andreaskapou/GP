@@ -59,4 +59,4 @@ lik     <- get(lik)     # Set the string as a variable
 # Call the Laplace approximation function #
 # for GP Classification                   #
 ##=========================================
-GP <- gpc.Laplace(theta=theta, covfunc=covfunc, lik=lik, x=x, y=y, Xs=Xs, tol=tol)
+GP <- gpc.Laplace(theta=theta, covfunc=covfunc, lik=lik, tol=tol, x=x, y=y, Xs=Xs)

@@ -1,4 +1,4 @@
-gpc.Laplace <- function(theta=list(lambda=1,sf2=1,sn2=0.001),covfunc,lik,x,y,Xs,tol=1e-6){
+gpc.Laplace <- function(theta=list(lambda=1,sf2=1,sn2=0.001),covfunc,lik,tol=1e-6,x,y,Xs){
   ##=======================================================================
   # gpc.Laplace - Laplace's approximation for binary Gaussian process     #
   # classification. Two modes are possible: training or testing:          #
@@ -12,8 +12,8 @@ gpc.Laplace <- function(theta=list(lambda=1,sf2=1,sn2=0.001),covfunc,lik,x,y,Xs,
   # The program is flexible in allowing several different likelihood      #
   # functions and a multitude of covariance functions.                    #
   #                                                                       #
-  # usage: [NLML dnlml] <- gpc.Laplace(theta,covfunc,lik,x,y, tol)        #
-  #    or: [p E.f C.f NLML] <- gpc.Laplace(theta,covfunc,lik,x,y,Xs, tol) #
+  # usage: [NLML dnlml] <- gpc.Laplace(theta,covfunc,lik,tol,x,y)         #
+  #    or: [p E.f C.f NLML] <- gpc.Laplace(theta,covfunc,lik,tol,x,y,Xs)  #
   #                                                                       #
   # where:                                                                #
   #   theta     is a (column) vector of hyperparameters                   #
@@ -38,8 +38,10 @@ gpc.Laplace <- function(theta=list(lambda=1,sf2=1,sn2=0.001),covfunc,lik,x,y,Xs,
   # The function can conveniently be used with the "minimize" function to #
   # train a Gaussian process (NOT IMPLEMENTED YET).                       #
   #                                                                       #
-  # Implementation follows Algorithm 3.2 p.47 from Rasmussen & Williams   #
-  # book 'Gaussian Processes for Machine Learning'                        #
+  # Implementation follows Algorithm 3.2 p.47 for the Laplace Approx in   #
+  # making prediction and Algorithm 5.1 p.126 for computing the approx    #
+  # log marginal likelihood and its derivatives wrt the hyperparameters   #
+  # from Rasmussen & Williams 'Gaussian Processes for Machine Learning'   #
   # Adapted from copyright 2006 Carl Edward Rasmussen version in matlab.  #
   ##=======================================================================
   n       <- NROW(x)                # Length of the training data
