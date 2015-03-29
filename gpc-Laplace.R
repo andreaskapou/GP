@@ -60,13 +60,24 @@ gpc.Laplace <- function(theta=list(lambda=1,sf2=1,sn2=0.001),covfunc,lik,x,y,Xs,
   # Approximate negative log marginal likelihood 
   NLML    <- t(NO$a)%*%NO$f/2 - NO$Phi$lp + sum(log(diag(L)))
   if (missing(Xs)){
+    DE    <- vector(length=length(theta))
             # Z = W^{1/2}*(I + W^{1/2}*K*W^{1/2})^{-1}*W^{1/2} using Cholesky
     Z     <- matrix(sW, nrow=length(sW), ncol=n)*solve.cholesky(L, diag(as.vector(sW)))
             # C = L\(W^{1/2}*K)
     C     <- solve(L, matrix(sW, nrow=length(sW), ncol=n)*K)
-            #?????
-    s2    <- -0.5*(diag(K) - as.matrix(colSums(C^2)))*(-NO$Phi$d3lp)
-    return(list(NLML=NLML))
+            # s2 = -1/2 * [(K^{-1} + W)^{-1}]_{ii} * der^{3}(log p(y|f))
+    s2    <- -0.5*(diag(K) - as.matrix(colSums(C^2)))*(-NO$Phi$d3lp) # Should the '-' be there?
+    for (j in 1: length(theta)){
+      C     <- covFunc(theta, x, x, j)   # Derivative matrix wrt hyperparameters
+            # s1 = 1/2*f'*K^{-1}*C*K^{-1}*f - 1/2*tr[(W^{-1}+K)^{-1} * C]
+      s1    <- 0.5*t(NO$a) %*% C %*% NO$a - 0.5*sum(colSums(Z*C))
+            # b = C * der(log p(y|f))
+      b     <- C %*% NO$Phi$d1lp
+            # (I + KW)^{-1} * b
+      s3    <- b - K %*% (Z %*% b)
+      DE[j] <- -s1 - t(s2) %*% s3     # Take the negative Derivative of LML
+    }
+    return(list(NLML=NLML, DE=DE))
   }else{
     # Compute predictive probabilities
     k.star  <- covFunc(theta,x,Xs)
@@ -74,7 +85,7 @@ gpc.Laplace <- function(theta=list(lambda=1,sf2=1,sn2=0.001),covfunc,lik,x,y,Xs,
               # v = L\(W^{1/2}*k(x*))
     v       <- solve(L, matrix(sW,nrow=length(sW),ncol=NROW(Xs))*k.star)
     #C.f    <- covFunc(theta,Xs,Xs)-t(v)%*%v  # Impractical for large datasets
-    Kss     <- rep(theta$sn2^2 + 1, NROW(Xs))
+    Kss     <- rep(1, NROW(Xs))
     C.f     <- as.matrix(Kss) - as.matrix(colSums(v * v)) # Latent variances
     p       <- lik(E.f, C.f, 1)               # Average predictive probability
     

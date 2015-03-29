@@ -24,7 +24,7 @@ source("newton-optimization.R")
 ##=======================
 # Generate data set     #
 ##=======================
-set.seed(12345)   # Set a seed for repeatable plots
+set.seed(1235)   # Set a seed for repeatable plots
 n1  <- 80         # Number of data points from each class
 n2  <- 40
 mu1 <- c(1,0)     # Two mean vectors
@@ -46,8 +46,7 @@ Xs  <- cbind(as.vector(t$x),  as.vector(t$y))
 ##=======================
 l       <- 1      # Length-scale parameter
 sf2     <- 1      # Singal variance
-sn2     <- 0.01   # Noise variance
-theta   <- list(lambda=l, sf2=sf2, sn2=sn2)
+theta   <- list(lambda=l, sf2=sf2)
 
 tol     <- 1e-6;        # Tolerance for when to stop Newton iterations
 covFunc <- "covSE.iso"  # Covariance function to be used
@@ -60,4 +59,4 @@ lik     <- get(lik)     # Set the string as a variable
 # Call the Laplace approximation function #
 # for GP Classification                   #
 ##=========================================
-GP <- gpc.Laplace(theta, covfunc, lik, x, y, Xs, tol)
+GP <- gpc.Laplace(theta=theta, covfunc=covfunc, lik=lik, x=x, y=y, Xs=Xs, tol=tol)
