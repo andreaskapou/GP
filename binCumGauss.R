@@ -35,8 +35,9 @@ binCumGauss <- function(f, m, k, pred){
     
     d1lp  <- k*N/Phi - (m-k)*N/(1-Phi)    # 1st derivative
     d2lp  <- (-k*(N*(f*Phi+N)/Phi^2)) - (m-k)*(N*(N-f*(1-Phi))/(1-Phi)^2)
-    
-    d3lp  <- 3*f*N^2/Phi^2 + 2*y*N^3/Phi^3 + y*N*(f^2-1)/Phi # 3rd derivative
+    d3lp  <- (-k*(N*(-2*(N^2)-3*N*x*Phi-(Phi^2)*((x^2)-1)))/(Phi^3)) - 
+                (m-k)*(N*(N*(2*N-3*x+3*x*Phi)+(x^2)*((Phi^2)-2*Phi+1)-
+                                            (Phi^2)+2*Phi-1)/((1-Phi)^3))
     return(list(lp=lp, d1lp=d1lp, d2lp=d2lp, d3lp=d3lp))
   }else{
     pi.pred <- pnorm(f/sqrt(1 + y)) # Approximate predictive probability for 
