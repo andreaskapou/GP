@@ -49,7 +49,7 @@ newton.optimization <- function(K, y, lik, tol){
     i         <- 0
     while ((i < 10) & (Psi_new < Psi_old)){ # If objective didn't increase ...
       a       <- (a_old + a)/2                # Reduce step size by half
-      f       <- K %*% a        
+      f       <- K %*% a
       Phi     <- lik(f, y)
       Psi_new <- (-t(a) %*% f/2) + Phi$lp
       i       <- i+1                          # Repeat at most 10 times
