@@ -19,17 +19,18 @@ source("covSE-iso.R")
 source("sq-dist.R")
 source("meshgrid.R")
 source("cumGauss.R")
+source("binCumGauss.R")
 source("newton-optimization.R")
 
 ##=======================
 # Generate data set     #
 ##=======================
-set.seed(1235)   # Set a seed for repeatable plots
+set.seed(1235)    # Set a seed for repeatable plots
 n1  <- 80         # Number of data points from each class
 n2  <- 40
-mu1 <- c(1,0)     # Two mean vectors
-mu2 <- c(-1,0)
-S1  <- diag(2)    # Two covatriance matrices
+mu1 <- c(3,2)     # Two mean vectors
+mu2 <- c(-3,-2)
+S1  <- diag(2)    # Two covariance matrices
 S2  <- matrix(c(1, 0.95, 0.95, 1), nrow=2, ncol=2)
 x1  <- mvrnorm(n1, mu=mu1, Sigma=S1)
 x2  <- mvrnorm(n2, mu=mu2, Sigma=S2)
@@ -39,7 +40,6 @@ y   <- c(rep(-1, n1), rep(1, n2))   # Outputs of training data
 t1  <- seq(from=-4, to=4, by=0.1)   # Test data
 t   <- meshgrid(t1, t1)
 Xs  <- cbind(as.vector(t$x),  as.vector(t$y))
-
 
 ##=======================
 # Initialize parameters #
@@ -59,4 +59,27 @@ lik     <- get(lik)     # Set the string as a variable
 # Call the Laplace approximation function #
 # for GP Classification                   #
 ##=========================================
-GP <- gpc.Laplace(theta=theta, covfunc=covfunc, lik=lik, tol=tol, x=x, y=y, Xs=Xs)
+GP <- gpc.Laplace(theta=theta, covfunc=covfunc, lik=lik, tol=tol, x=x, y=y)
+
+
+
+
+##========================================#
+# Use the binCumGauss Likelihood function #
+##=========================================
+m1      <- rbinom(80, 13, prob=0.95)
+k1      <- rbinom(80, 6,  prob=0.95)
+m2      <- rbinom(40, 13, prob=0.95)
+k2      <- rbinom(40, 10, prob=0.95)
+
+m       <- c(m1, m2)
+k       <- c(k1, k2)
+y       <- list(m=m, k=k)
+lik     <- "binCumGauss"   # Likelihood function
+lik     <- get(lik)     # Set the string as a variable
+
+##========================================#
+# Call the Laplace approximation function #
+# for GP Classification                   #
+##=========================================
+GPB <- gpc.Laplace(theta=theta, covfunc=covfunc, lik=lik, tol=tol, x=x, y=y)
