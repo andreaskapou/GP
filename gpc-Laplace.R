@@ -20,7 +20,12 @@ gpc.Laplace <- function(theta=list(lambda=1,sf2=1,sn2=0.001),covfunc,lik,tol=1e-
   #   covfunc   is the name of the covariance function (see below)        #
   #   lik       is the name of the likelihood function (see below)        #
   #   x         is a n by D matrix of training inputs                     #
-  #   y         is a (column) vector (of size n) of binary +1/-1 targets  #
+  #   y         is an object of size n of target values and the structure #
+  #               depends on the likelihood function that will be used.   #
+  #               E.g if 'cumGauss' is used y will be a (column) vector   #
+  #                     (of size n) of binary +1/-1 targets               #
+  #                   if 'binCumGauss is used y will be an object of size #
+  #                     n with each entry being a tuple (m, k)            #
   #   xstar     is a nn by D matrix of test inputs                        #
   #   nlml      is the returned value of the neg log marg likelihood      #
   #   dnlml     is a (column) vector of partial derivatives of the neg    #
@@ -35,14 +40,15 @@ gpc.Laplace <- function(theta=list(lambda=1,sf2=1,sn2=0.001),covfunc,lik,tol=1e-
   #                                                                       #
   #   cumGauss   the cumulative Gaussian (error function)                 #
   #                                                                       #
-  # The function can conveniently be used with the "minimize" function to #
-  # train a Gaussian process (NOT IMPLEMENTED YET).                       #
+  # The function can conveniently be used with the "minimize" function    #
+  # to train a Gaussian process.                                          #
   #                                                                       #
   # Implementation follows Algorithm 3.2 p.47 for the Laplace Approx in   #
   # making prediction and Algorithm 5.1 p.126 for computing the approx    #
   # log marginal likelihood and its derivatives wrt the hyperparameters   #
   # from Rasmussen & Williams 'Gaussian Processes for Machine Learning'   #
   # Adapted from copyright 2006 Carl Edward Rasmussen version in matlab.  #
+  #                                                                       #
   ##=======================================================================
   n       <- NROW(x)                # Length of the training data
   I       <- diag(1, n)             # Identity matrix
@@ -69,8 +75,9 @@ gpc.Laplace <- function(theta=list(lambda=1,sf2=1,sn2=0.001),covfunc,lik,tol=1e-
     Z     <- matrix(sW,nrow=length(sW),ncol=n)*solve.cholesky(L,diag(as.vector(sW)))
             # C = L\(W^{1/2}*K)
     C     <- solve(L, matrix(sW, nrow=length(sW), ncol=n)*K)
+    
             # s2 = -1/2 * [(K^{-1} + W)^{-1}]_{ii} * der^{3}(log p(y|f))
-            # Should the '-' be there for the 3rd derivative?
+            # Should the '-' be there for the 3rd derivative???????????
     s2    <- -0.5*(diag(K) - as.matrix(colSums(C^2)))*(-NO$Phi$d3lp) 
     for (j in 1: length(theta)){
       C     <- covFunc(theta, x, x, j) # Derivative matrix wrt hyperparameters
@@ -93,8 +100,10 @@ gpc.Laplace <- function(theta=list(lambda=1,sf2=1,sn2=0.001),covfunc,lik,tol=1e-
     #C.f    <- covFunc(theta,Xs,Xs)-t(v)%*%v  # Impractical for large datasets
     Kss     <- rep(1, NROW(Xs))
     C.f     <- as.matrix(Kss) - as.matrix(colSums(v * v)) # Latent variances
-    p       <- lik(E.f, C.f, 1)               # Average predictive probability
-    
+    if (is.list(y)) # NOT IMPLEMENTED yet for Binomial Probit function
+      p     <- 1
+    else
+      p       <- lik(E.f, C.f, 1)               # Average predictive probability
     return(list(NLML=NLML, E.f=E.f, C.f=C.f, p=p))
   }
 }
