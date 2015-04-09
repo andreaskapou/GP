@@ -55,16 +55,16 @@ covFunc <- get(covFunc) # Set the string as a variable
 lik     <- "cumGauss"   # Likelihood function
 lik     <- get(lik)     # Set the string as a variable
 
-##========================================#
+##=========================================
 # Call the Laplace approximation function #
 # for GP Classification                   #
 ##=========================================
-GP <- gpc.Laplace(theta=theta, covfunc=covfunc, lik=lik, tol=tol, x=x, y=y)
+GP <- gpc.Laplace(theta=theta, covfunc=covfunc, lik=lik, tol=tol, x=x, y=y, Xs=Xs)
 
 
 
 
-##========================================#
+##=========================================
 # Use the binCumGauss Likelihood function #
 ##=========================================
 m1      <- rbinom(80, 13, prob=0.95)
@@ -78,8 +78,8 @@ y       <- list(m=m, k=k)
 lik     <- "binCumGauss"   # Likelihood function
 lik     <- get(lik)     # Set the string as a variable
 
-##========================================#
+##=========================================
 # Call the Laplace approximation function #
 # for GP Classification                   #
 ##=========================================
-GPB <- gpc.Laplace(theta=theta, covfunc=covfunc, lik=lik, tol=tol, x=x, y=y)
+GPB <- gpc.Laplace(theta=theta, covfunc=covfunc, lik=lik, tol=tol, x=x, y=y, Xs=Xs)
