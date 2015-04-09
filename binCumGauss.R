@@ -48,7 +48,7 @@ binCumGauss <- function(f, y, pred){
                                             (Phi^2)+2*Phi-1)/((1-Phi)^3))
     return(list(lp=lp, d1lp=d1lp, d2lp=d2lp, d3lp=d3lp))
   }else{ # Not implemented yet
-    pi.pred <- pnorm(f/sqrt(1 + 1)) # y
+    pi.pred <- pnorm(f/sqrt(1 + y))
     return(pi.pred)
   }
 }
