@@ -103,7 +103,7 @@ gpc.Laplace <- function(theta=list(lambda=1,sf2=1,sn2=0.001),covfunc,lik,tol=1e-
     if (is.list(y)) # NOT IMPLEMENTED yet for Binomial Probit function
       p     <- 1
     else
-      p       <- lik(E.f, C.f, 1)               # Average predictive probability
+      p     <- lik(E.f, C.f, 1)               # Average predictive probability
     return(list(NLML=NLML, E.f=E.f, C.f=C.f, p=p))
   }
 }
