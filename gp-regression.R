@@ -34,7 +34,7 @@ GP.fit <- function(theta=list(lambda=1,sf2=1,sn2=0.05),covFunc,f,Xs,method="chol
   #               hyperparameter                                    #
   #   E.f     is a (column) vector (of size nn) of prediced means   #
   #   C.f     is a (column) vector (of size nn) of predicted var    #
-  #                                                                 #                                                             #
+  #                                                                 #
   # Adapted from (C) copyright 2006 by Carl Edward Rasmussen        #
   # version in matlab.                                              #
   # Notation mainly follows from Rasmussen and Williams's book      #
@@ -60,8 +60,14 @@ GP.fit <- function(theta=list(lambda=1,sf2=1,sn2=0.05),covFunc,f,Xs,method="chol
   }else if (identical(method,"cholesky")){  # Compute using Cholesky decomposition
     L         <- t(chol(K + noise))
     a         <- solve.cholesky(L, y)       # solve(t(L), solve(L, f$y))
+    NLML      <- -0.5*t(y) %*% a - sum(log(diag(L))) - 0.5*n*log(2*pi)
     if (missing(Xs)){ # If no test points, just compute the marginal
-      NLML    <- -0.5*t(y) %*% a - sum(log(diag(L))) - 0.5*n*log(2*pi)
+      ##### NOT IMPLEMENTED YET
+      DE      <- vector(length=length(theta))
+      W       <- 
+      for (j in 1: (length(theta)-1)){ # Compute only the first two parameter derivatives
+        C     <- covFunc(theta, x, x, j)
+      }
     }else{
       k.star  <- covFunc(theta,x,Xs)
       E.f     <- t(k.star) %*% a            # Latent means

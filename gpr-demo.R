@@ -23,8 +23,8 @@ source("sq-dist.R")
 ##=======================
 set.seed(12345)   # Set a seed for repeatable plots
 N       <- 50     # Number of samples
-l       <- .8     # Length-scale parameter
-sf2     <- .7     # Singal variance
+l       <- 1     # Length-scale parameter
+sf2     <- 1     # Singal variance
 sn2     <- .05    # Noise variance
 
 Xs      <- seq(-8, 8, len=100)  # Test data points
