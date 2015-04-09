@@ -15,7 +15,12 @@ newton.optimization <- function(K, y, lik, tol){
   #                                                                     #
   # Input:                                                              #
   #     K   is covariance matrix on training points                     #
-  #     y   is a vector with target values (+1 or -1)                   #
+  #     y   is an object of size n of target values and the structure   #
+  #           depends on the likelihood function that will be used.     #
+  #           E.g if 'cumGauss' is used y will be a (column) vector     #
+  #                 (of size n) of binary +1/-1 targets                 #
+  #               if 'binCumGauss is used y will be an object of size   #
+  #                 n with each entry being a tuple (m, k)              #
   #     lik is the likelihood function                                  #    
   #     tol is the tolerance for when to stop the Newton iterations     #
   # Output:                                                             #
@@ -28,10 +33,9 @@ newton.optimization <- function(K, y, lik, tol){
   I       <- diag(1, n)     # Identity matrix
   a = f   <- rep(0, n)      # Initial points for f and a
   
-  Phi     <- lik(f, y)      # Compute likelihood function and its derivatives
-  Psi_new <- (-n*log(2))    # Objective initial value
-  Psi_old <- (-Inf)         # Make sure Newton iteration starts
-  
+  Phi     <- lik(f, y)        # Compute likelihood function and its derivatives
+  Psi_new <- -((n*log(2))^2)  # Objective initial value
+  Psi_old <- (-Inf)           # Make sure Newton iteration starts
   while (Psi_new-Psi_old > tol){  # Begin Newton's iterations
     Psi_old <- Psi_new
     a_old   <- a                  # In case objective does not increase
