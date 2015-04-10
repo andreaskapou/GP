@@ -20,12 +20,12 @@ covSE.iso  <- function(theta, X1, X2, der){
     stop("Theta needs to be provided at least with 2 hyperparameters.")
   if (nargs() < 3)
     stop("Function requires 3 parameters.")
-  lambda    <- theta$lambda^2 # Length-scale parameter
-  sf2       <- theta$sf2^2    # Signal variance parameter
+  lambda    <- theta$lambda   # Length-scale parameter
+  sf2       <- theta$sf2      # Signal variance parameter
   
   # Divide by the square of length-scale lambda
-  X1        <- as.matrix(X1) / lambda
-  X2        <- as.matrix(X2) / lambda
+  X1        <- as.matrix(X1)
+  X2        <- as.matrix(X2)
   
   # Split by rows (i.e. to take D-dimensional data as a unit)
   X1.rows   <- split(X1, row(X1))
@@ -38,12 +38,12 @@ covSE.iso  <- function(theta, X1, X2, der){
   # Compute distance of the D-dimensional data points
   K <- outer(X1.rows, X2.rows, FUN=Vec.Dist)
   if (missing(der)){
-    return(sf2 * exp(-0.5*K))
+    return(sf2^2 * exp(-0.5*K/(lambda^2)))
   }else{
     if (der==1){
-      return(sf2 * exp(-0.5*K) * K)
+      return(sf2^2 * exp(-0.5*K/(lambda^2)) * K/(lambda^3))
     }else if (der==2){
-      return(2 * sf2 * exp(-0.5*K))
+      return(2 * sf2^2 * exp(-0.5*K/lambda^2))
     }else{
       stop("Unknown hyperparameter derivative")
     }
