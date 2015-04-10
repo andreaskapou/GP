@@ -67,7 +67,7 @@ GP.fit <- function(theta=list(lambda=1,sf2=1,sn2=0.05),covFunc,f,Xs,method="chol
       DE      <- vector(length=length(theta)-1)
       W       <- solve.cholesky(L,diag(n)) - a %*% t(a)
       # Compute only the first two parameter derivatives (ignore noise)
-      for (j in 1: (length(theta)-1)){ 
+      for (j in 1: (length(theta)-1)){
         C     <- covFunc(theta, x, x, j)
         DE[j] <- 0.5 * sum(W*C)
       }
@@ -77,7 +77,7 @@ GP.fit <- function(theta=list(lambda=1,sf2=1,sn2=0.05),covFunc,f,Xs,method="chol
       E.f     <- t(k.star) %*% a            # Latent means
       v       <- solve(L, k.star)
       #C.f    <- covFunc(theta,Xs,Xs) - t(v)%*%v #impractical for large datasets
-      Kss     <- rep(theta$sn2^2 + 1, NROW(Xs))
+      Kss     <- rep(theta$sn2^2 + theta$sf2^2, NROW(Xs))
       C.f     <- as.matrix(Kss) - as.matrix(colSums(v * v)) # Latent variances
     }
   }
