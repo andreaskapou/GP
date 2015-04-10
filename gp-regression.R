@@ -4,8 +4,8 @@ GP.fit <- function(theta=list(lambda=1,sf2=1,sn2=0.05),covFunc,f,Xs,method="chol
   # function can be given as a parameter. Two modes are possible:   # 
   # 1) training: if no test data (Xs) are given, function returns   #
   #       the negative log likelihood and its partial derivatives   #
-  #       with respect to the hyperparameters(NOT DONE YET); this   #
-  #       mode is used to fit the hyperparameters.                  #
+  #       with respect to the hyperparameters; this mode is used    #
+  #       to fit the hyperparameters.                               #
   # 2) prediction: If test data are given, then (marginal) Gaussian #
   #       predictions are computed, whose mean and variance are     #
   #       returned. Note that in cases where covariance function    # 
@@ -29,7 +29,7 @@ GP.fit <- function(theta=list(lambda=1,sf2=1,sn2=0.05),covFunc,f,Xs,method="chol
   #   method  is the method used to compute the matrix inversion    #
   #                                                                 #
   #   NLML    is the value of the negative log marginal likelihood  #
-  #   DNLML   is a (column) vector of partial derivatives of the    #
+  #   DE      is a (column) vector of partial derivatives of the    #
   #               negative log marginal likelihood wrt each log     #
   #               hyperparameter                                    #
   #   E.f     is a (column) vector (of size nn) of prediced means   #
@@ -61,13 +61,17 @@ GP.fit <- function(theta=list(lambda=1,sf2=1,sn2=0.05),covFunc,f,Xs,method="chol
     L         <- t(chol(K + noise))
     a         <- solve.cholesky(L, y)       # solve(t(L), solve(L, f$y))
     NLML      <- -0.5*t(y) %*% a - sum(log(diag(L))) - 0.5*n*log(2*pi)
-    if (missing(Xs)){ # If no test points, just compute the marginal
-      ##### NOT IMPLEMENTED YET
-      DE      <- vector(length=length(theta))
-      W       <- 
-      for (j in 1: (length(theta)-1)){ # Compute only the first two parameter derivatives
+    if (missing(Xs)){ # If no test points, compute marginal and derivatives
+      # Note that we compute the negative log marginal likelihood!
+      # where the derivative is:  1/2*tr((a*a'-K^{-1})* DK/Dtheta_{j})
+      DE      <- vector(length=length(theta)-1)
+      W       <- solve.cholesky(L,diag(n)) - a %*% t(a)
+      # Compute only the first two parameter derivatives (ignore noise)
+      for (j in 1: (length(theta)-1)){ 
         C     <- covFunc(theta, x, x, j)
+        DE[j] <- 0.5 * sum(W*C)
       }
+      return(list(NLML=NLML, DE=DE))
     }else{
       k.star  <- covFunc(theta,x,Xs)
       E.f     <- t(k.star) %*% a            # Latent means

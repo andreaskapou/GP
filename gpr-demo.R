@@ -74,3 +74,6 @@ gg2 <- ggplot(values, aes(x=x,y=value)) +
   theme_bw() +
   scale_y_continuous(lim=c(-5,5), name="output, f(x)") +
   xlab("input, x")
+
+
+GPM      <- GP.fit(theta, covFunc, f, method=method)
