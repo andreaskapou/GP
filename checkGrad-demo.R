@@ -6,7 +6,7 @@ cur.dir <- dirname(parent.frame(2)$ofile)
 setwd(cur.dir)
 source("checkGrad.R")
 
-f <- c(0, .5, -.7, .2, .9)
+f <- c(4, .5, .7, .2, .9)
 m <- c(10, 11, 10, 11, 10)
 k <- c(5, 7, 6, 3, 5)
 e <- 1e-4
@@ -55,23 +55,23 @@ c3 <- checkGrad(ddg, dddg, e, f)
 #################################
 #################################
 
-lp <- function(x, y) {
+lp <- function(x) {
   Phi <- pnorm(x) + 1e-10
   return(log(Phi))
 }
-d1lp  <- function(x, y) {
+d1lp  <- function(x) {
   Phi <- pnorm(x) + 1e-10
   N   <- dnorm(x)
   res <- 1*N / Phi 
   
 }
-d2lp  <- function(x, y) {
+d2lp  <- function(x) {
   Phi <- pnorm(x) + 1e-10
   N   <- dnorm(x)
   res <- (- N^2 / Phi^2) - (1*x*N)/Phi  
   return(res)
 }
-d3lp  <- function(x, y) {
+d3lp  <- function(x) {
   Phi <- pnorm(x) + 1e-10
   N   <- dnorm(x)
   res <- (3*x*N^2/Phi^2 + 2*1*N^3/Phi^3 + 1*N*(x^2-1)/Phi)
@@ -80,3 +80,26 @@ d3lp  <- function(x, y) {
 d1 <- checkGrad(lp, d1lp, e, f)
 d2 <- checkGrad(d1lp, d2lp, e, f)
 d3 <- checkGrad(d2lp, d3lp, e, f)
+
+
+
+##############################
+###############################
+K <- 10
+sf2 = 2
+lambda=10
+
+se.sf2 <- function(sf2){
+  return(sf2^2 * exp(-0.5*K/(lambda^2)))
+}
+dse.sf2 <- function(sf2){
+  return(2 * sf2 * exp(-0.5*K/lambda^2))
+}
+se.lam <- function(lambda){
+  return(sf2^2 * exp(-0.5*K/(lambda^2)))
+}
+dse.lam <- function(lambda){
+  return(sf2^2 * exp(-0.5*K/(lambda^2)) * K/(lambda^3))
+}
+ds.se <- checkGrad(se.sf2, dse.sf2, e, f)
+dl.se <- checkGrad(se.lam, dse.lam, e, f)
