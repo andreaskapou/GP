@@ -27,13 +27,13 @@ binCumGauss <- function(f, y, pred){
   #                                                                     #
   ##=====================================================================
   
-  if (!is.list(y) | length(y) != 2){
-    stop("y should be an Object of type List and contain two entries")
-  }
-  m <- y$m  # Number of total trials
-  k <- y$k  # Number of successes in the corresponding m trials
-  
   if (missing(pred)){
+    if (!is.list(y) | length(y) != 2){
+      stop("y should be an Object of type List and contain two entries")
+    }
+    m <- y$m  # Number of total trials
+    k <- y$k  # Number of successes in the corresponding m trials
+    
     Phi   <- pnorm(f) + 1e-10   # Cumulative Density Function of N(0,1)
     N     <- dnorm(f)           # Density for function f under N(0,1)
     # Compute -> log(choose(m, k)) + k*log(Phi) + (m-k)*log(1-Phi)
@@ -48,7 +48,8 @@ binCumGauss <- function(f, y, pred){
                                             (Phi^2)+2*Phi-1)/((1-Phi)^3))
     return(list(lp=lp, d1lp=d1lp, d2lp=d2lp, d3lp=d3lp))
   }else{ # Not implemented yet
-    pi.pred <- pnorm(f/sqrt(1 + y))
+    #pi.pred <- pnorm(f/sqrt(1 + y))
+    pi.pred  <- 1
     return(pi.pred)
   }
 }

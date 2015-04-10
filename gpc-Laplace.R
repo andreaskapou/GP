@@ -100,10 +100,7 @@ gpc.Laplace <- function(theta=list(lambda=1,sf2=1,sn2=0.001),covfunc,lik,tol=1e-
     #C.f    <- covFunc(theta,Xs,Xs)-t(v)%*%v  # Impractical for large datasets
     Kss     <- rep(1, NROW(Xs))
     C.f     <- as.matrix(Kss) - as.matrix(colSums(v * v)) # Latent variances
-    if (is.list(y)) # NOT IMPLEMENTED yet for Binomial Probit function
-      p     <- 1
-    else
-      p     <- lik(E.f, C.f, 1)               # Average predictive probability
+    p     <- lik(E.f, C.f, 1)               # Average predictive probability
     return(list(NLML=NLML, E.f=E.f, C.f=C.f, p=p))
   }
 }
