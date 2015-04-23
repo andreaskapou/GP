@@ -4,7 +4,8 @@
 ##===============================
 cur.dir <- dirname(parent.frame(2)$ofile)
 setwd(cur.dir)
-source("checkGrad.R")
+library(R.utils)
+sourceDirectory("lib", modifiedOnly=FALSE) # Source the 'lib' directory
 
 f <- c(4, .5, .7, .2, .9)
 m <- c(10, 11, 10, 11, 10)

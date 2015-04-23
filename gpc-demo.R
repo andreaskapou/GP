@@ -13,14 +13,11 @@ require(plyr)
 require(reshape2)
 require(ggplot2)
 require(mvtnorm)
+library(R.utils)
 source("gpc-Laplace.R")
-source("solve-cholesky.R")
-source("covSE-iso.R")
-source("sq-dist.R")
-source("meshgrid.R")
-source("cumGauss.R")
-source("binCumGauss.R")
 source("newton-optimization.R")
+sourceDirectory("lib", modifiedOnly=FALSE) # Source the 'lib' directory
+
 
 ##=======================
 # Generate data set     #

@@ -13,10 +13,9 @@ require(plyr)
 require(reshape2)
 require(ggplot2)
 require(mvtnorm)
-source("gp-regression.R")
-source("solve-cholesky.R")
-source("covSE-iso.R")
-source("sq-dist.R")
+library(R.utils)
+source("gpr.R")
+sourceDirectory("lib", modifiedOnly=FALSE) # Source the 'lib' directory
 
 ##=======================
 # Initialize parameters #
