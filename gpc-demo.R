@@ -15,7 +15,6 @@ require(ggplot2)
 require(mvtnorm)
 library(R.utils)
 source("gpc-Laplace.R")
-source("newton-optimization.R")
 sourceDirectory("lib", modifiedOnly=FALSE) # Source the 'lib' directory
 
 
