@@ -104,3 +104,70 @@ dse.lam <- function(lambda){
 }
 ds.se <- checkGrad(se.sf2, dse.sf2, e, f)
 dl.se <- checkGrad(se.lam, dse.lam, e, f)
+
+
+
+
+
+
+
+a <- .6
+b <- .4
+c <- .1
+
+f <- c(.4, .5, .7, .2, .9)
+t <- c(10, 11, 10, 11, 10)
+m <- c(5, 7, 6, 3, 5)
+e <- 1e-4
+
+x <- f
+LLa <- function(a) {
+  g   <- a*x^2 + b*x + c
+  Phi <- pnorm(g) + 1e-10
+  res <- dbinom(m, t, Phi, log=TRUE)
+  return(res)
+}
+L.a <- function(a){
+  g   <- a*x^2 + b*x + c
+  Phi <- pnorm(g) + 1e-10
+  N   <- dnorm(g)
+  res <- N * x^2 * ( (m-t*Phi)/(Phi*(1-Phi)) )
+}
+L.aa <- function(a){
+  g   <- a*x^2 + b*x + c
+  Phi <- pnorm(g) + 1e-10
+  N   <- dnorm(g)
+  res <- x^2 * ( (m * (x^2*N*(-g*Phi - N)/Phi^2) ) - ((t-m)*(x^2*N*(-g+g*Phi+N))/((1-Phi)^2)) )
+}
+
+
+LLb <- function(b) {
+  g   <- a*x^2 + b*x + c
+  Phi <- pnorm(g) + 1e-10
+  res <- dbinom(m, t, Phi, log=TRUE)
+  return(res)
+}
+L.b <- function(b){
+  g   <- a*x^2 + b*x + c
+  Phi <- pnorm(g) + 1e-10
+  N   <- dnorm(g)
+  res <- N * x * ( (m-t*Phi)/(Phi*(1-Phi)) )
+}
+
+LLc <- function(c) {
+  g   <- a*x^2 + b*x + c
+  Phi <- pnorm(g) + 1e-10
+  res <- dbinom(m, t, Phi, log=TRUE)
+  return(res)
+}
+L.c <- function(c){
+  g   <- a*x^2 + b*x + c
+  Phi <- pnorm(g) + 1e-10
+  N   <- dnorm(g)
+  res <- N * ( (m-t*Phi)/(Phi*(1-Phi)) )
+}
+
+dl.a  <- checkGrad(LLa, L.a, e, f)
+dl.b  <- checkGrad(LLb, L.b, e, f)
+dl.c  <- checkGrad(LLc, L.c, e, f)
+dll.a  <- checkGrad(L.a, L.aa, e, f)
