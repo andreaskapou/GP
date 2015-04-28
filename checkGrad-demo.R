@@ -137,7 +137,16 @@ L.aa <- function(a){
   g   <- a*x^2 + b*x + c
   Phi <- pnorm(g) + 1e-10
   N   <- dnorm(g)
-  res <- x^2 * ( (m * (x^2*N*(-g*Phi - N)/Phi^2) ) - ((t-m)*(x^2*N*(-g+g*Phi+N))/((1-Phi)^2)) )
+  res <- x^4*N*(m*(-g*Phi-N)/Phi^2 - (t-m)*(g*Phi+N-g)/(1-Phi)^2)
+  #res <- x^2 * ( (m * (x^2*N*(-g*Phi - N)/Phi^2) ) - ((t-m)*(x^2*N*(-g+g*Phi+N))/((1-Phi)^2)) )
+}
+
+L.aaa <- function(a){
+  g   <- a*x^2 + b*x + c
+  Phi <- pnorm(g) + 1e-10
+  N   <- dnorm(g)
+  res <- x^2*N*(m*(2*N*Phi-g*Phi-N) + t*Phi^2*(g-g*Phi-N))/(Phi^2*(1-Phi)^2)
+  #res <- x^2 * ( (m * (x^2*N*(-g*Phi - N)/Phi^2) ) - ((t-m)*(x^2*N*(-g+g*Phi+N))/((1-Phi)^2)) )
 }
 
 
@@ -153,6 +162,12 @@ L.b <- function(b){
   N   <- dnorm(g)
   res <- N * x * ( (m-t*Phi)/(Phi*(1-Phi)) )
 }
+L.bb <- function(b){
+  g   <- a*x^2 + b*x + c
+  Phi <- pnorm(g) + 1e-10
+  N   <- dnorm(g)
+  res <- x^2*N*(m*(-g*Phi-N)/Phi^2 - (t-m)*(g*Phi+N-g)/(1-Phi)^2)
+}
 
 LLc <- function(c) {
   g   <- a*x^2 + b*x + c
@@ -166,8 +181,18 @@ L.c <- function(c){
   N   <- dnorm(g)
   res <- N * ( (m-t*Phi)/(Phi*(1-Phi)) )
 }
+L.cc <- function(c){
+  g   <- a*x^2 + b*x + c
+  Phi <- pnorm(g) + 1e-10
+  N   <- dnorm(g)
+  res <- N*(m*(-g*Phi-N)/Phi^2 - (t-m)*(g*Phi+N-g)/(1-Phi)^2)
+}
 
 dl.a  <- checkGrad(LLa, L.a, e, f)
 dl.b  <- checkGrad(LLb, L.b, e, f)
 dl.c  <- checkGrad(LLc, L.c, e, f)
 dll.a  <- checkGrad(L.a, L.aa, e, f)
+dll.b  <- checkGrad(L.b, L.bb, e, f)
+dll.c  <- checkGrad(L.c, L.cc, e, f)
+
+dll.aa  <- checkGrad(L.a, L.aaa, e, f)
