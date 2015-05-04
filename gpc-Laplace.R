@@ -40,9 +40,6 @@ gpc.Laplace <- function(theta=list(lambda=1,sf2=1,sn2=0.001),covfunc,lik,tol=1e-
   #                                                                       #
   #   cumGauss   the cumulative Gaussian (error function)                 #
   #                                                                       #
-  # The function can conveniently be used with the "minimize" function    #
-  # to train a Gaussian process.                                          #
-  #                                                                       #
   # Implementation follows Algorithm 3.2 p.47 for the Laplace Approx in   #
   # making prediction and Algorithm 5.1 p.126 for computing the approx    #
   # log marginal likelihood and its derivatives wrt the hyperparameters   #
