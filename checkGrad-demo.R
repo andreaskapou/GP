@@ -111,20 +111,22 @@ dl.se <- checkGrad(se.lam, dse.lam, e, f)
 
 
 
-a <- .6
-b <- .4
+a <- .001
+b <- -4
 c <- .1
 
 f <- c(.4, .5, .7, .2, .9)
 t <- c(10, 11, 10, 11, 10)
-m <- c(5, 7, 6, 3, 5)
+m <- c(5, 7, 6, 4, 5)
 e <- 1e-4
 
-x <- c(.7, .1, .2, .3, .8)
-x <- m/t
+x <- c(-50/100, -40/100, -20/100, 20/100, 30/100)
+#x <- m/t
 LLa <- function(a) {
   g   <- a*x^2 + b*x + c
+  print(g)
   Phi <- pnorm(g) + 1e-10
+  print(Phi)
   res <- dbinom(m, t, Phi, log=TRUE)
   return(res)
 }
